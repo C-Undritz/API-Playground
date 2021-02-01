@@ -1,9 +1,9 @@
-const baseURL = "https://ci-swapi.herokuapp.com/api/";
+//const baseURL = "https://ci-swapi.herokuapp.com/api/";
 
-function getData(type, cb) {
+function getData(url, cb) {
     var xhr = new XMLHttpRequest();
 
-    xhr.open("GET", baseURL + type + "/");// this will append the base url with the type that are parsing in (people, film, vehicles or species) 
+    xhr.open("GET", url);// this will append the base url with the type that are parsing in (people, film, vehicles or species) 
     xhr.send();
 
     xhr.onreadystatechange = function() { 
@@ -23,12 +23,27 @@ function getTableHeaders(obj) {
     return `<tr>${tableHeaders}</tr>`;
 }
 
-function writeToDocument(type) {
+function generatePaginationButtons(next, prev) {
+    if (next && prev) {
+        return `<button onclick="writeToDocument('${prev}')">Previous</button>
+                <button onclick="writeToDocument('${next}')">Next</button>`;
+    } else if (next && !prev) {
+        return `<button onclick="writeToDocument('${next}')">Next</button>`;
+    } else if (!next && prev) {
+        return `<button onclick="writeToDocument('${prev}')">Previous</button>`;
+    }
+}
+
+function writeToDocument(url) {
     var tableRows = [];
     var el = document.getElementById("data");
     el.innerHTML = ""; // every time the button is clicked, the innerHTML will clear as it is set to an empty string here
     
-    getData(type, function(data) {
+    getData(url, function(data) {
+        var pagination;
+        if (data.next || data.previous) {
+            pagination = generatePaginationButtons(data.next, data.previous)
+        }
         data = data.results;
         var tableHeaders = getTableHeaders(data[0]);
 
@@ -37,13 +52,13 @@ function writeToDocument(type) {
 
             Object.keys(item).forEach(function(key) {
                 var rowData = item[key].toString();
-                var truncatedData = rowData.substring(0, 15)
+                var truncatedData = rowData.substring(0, 15);
                 dataRow.push(`<td>${truncatedData}</td>`);
             });
             tableRows.push(`<tr>${dataRow}</tr>`);
         });
 
-        el.innerHTML = `<table>${tableHeaders}${tableRows}</table>`;
+        el.innerHTML = `<table>${tableHeaders}${tableRows}</table>${pagination}`;
     });
 }
 
@@ -83,4 +98,15 @@ function writeToDocument(type) {
 //    array.
 // 6) Save and run this and Click on films and now we can see that we have the data being displayed. it's not terribly pretty, but it's tabular data nonetheless and it's functional.
 
+// NOTES(Tabular Data - Part Three)
+// 1) First thing that we need to do is to have everything appearing on a separate row.  So let's just put in a <tr> opening and a </tr> closing tag there when we're pushing 
+//    on to our tableRows array: tableRows.push(`<tr>${dataRow}</tr>`);
+// 2) The other thing that we need to do to get it displaying nicely is to truncate, or shorten, the information that's been inserted into our <td> element which means that 
+//    it'll take up less space on the screen, and we won't have to keep scrolling out to the side.  We're not too worried about presentation, but we really just want to learn 
+//    how to display this JSON data.
+// 3) So created a new variable called rowData, which is going to be set to the value of the keyand we're going to make sure that that's a string.
+// 4) Then created a new variable called truncatedData, which is going to be equal to a substring of our rowData.
+// 5) And we're just going to take from the 0 to the 15th character.  So that will just take the first 15 characters from our rowData.
+// 6) Now update my template literal here to show truncated data instead of rowData: dataRow.push(`<td>${truncatedData}</td>`);
+// 7) Now when it is refreshed we can see that everything is displayed in a much nicer format. It fits neatly on the page.
 
